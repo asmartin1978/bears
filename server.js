@@ -50,12 +50,6 @@ router.use(function(req, res, next) {
     next(); // Hay que llamar al siguiente middleware
 });
 
-router.use(function(req, res, next) {
-    // do logging
-    console.log('Peticion recibida 2');
-    next(); // Hay que llamar al siguiente middleware
-});
-
 
 // Ruta de test (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
