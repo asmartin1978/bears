@@ -11,6 +11,14 @@ var bodyParser = require('body-parser');    // Instanciaion de bodyParser para p
 app.use(bodyParser.urlencoded({ extended: true })); //Configuro body parser para leer JSON en el body
 app.use(bodyParser.json());
 
+var passport = require("passport");
+//Importamos la estrategia
+var auth     = require('./auth');
+//Le decimos a passport que la use
+passport.use(auth.strategy);
+app.use(passport.initialize());
+
+
 
 var mongoose   = require('mongoose');   //Importacion de mongoose
 var Bear     = require('./app/models/bear'); // Importacion de la clase BEAR
@@ -39,6 +47,9 @@ var port = process.env.PORT || 8080;        // set our port
 
 
 
+
+
+
 // ENRUTAMIENTO
 // =============================================================================
 var router = express.Router();              // Instancio el router de express
@@ -57,11 +68,28 @@ router.get('/', function(req, res) {
 });
 
 
+
+router.route('/login')
+
+    .post(function(req, res) {
+          //Pillamos parametros del request
+          if(req.body.name && req.body.password){
+            var name = req.body.name;
+            var password = req.body.password;
+          }
+
+          return auth.autenticar(name, password, res);
+
+    });
+
+
+
+
 //Entutamiento de bears, para la colecion entera
 router.route('/bears')
 
     // create a bear (accessed at POST http://localhost:8080/api/bears)
-    .post(function(req, res) {
+    .post(passport.authenticate('jwt', { session: false }),function(req, res) {
 
         var bear = new Bear();      // create a new instance of the Bear model
         bear.name = req.body.name;  // set the bears name (comes from the request)
@@ -77,7 +105,7 @@ router.route('/bears')
     })
 
      // get all the bears (accessed at GET http://localhost:8080/api/bears)
-    .get(function(req, res) {
+    .get(passport.authenticate('jwt', { session: false }), function(req, res) {
         Bear.find(function(err, bears) {
             if (err)
                 res.send(err);
@@ -91,7 +119,7 @@ router.route('/bears')
 router.route('/bears/:bear_id')
 
     // get the bear with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
-    .get(function(req, res) {
+    .get(passport.authenticate('jwt', { session: false }),function(req, res) {
         Bear.findById(req.params.bear_id, function(err, bear) {
             if (err)
                 res.send(err);
@@ -100,7 +128,7 @@ router.route('/bears/:bear_id')
     })
 
     // update the bear with this id (accessed at PUT http://localhost:8080/api/bears/:bear_id)
-    .put(function(req, res) {
+    .put(passport.authenticate('jwt', { session: false }),function(req, res) {
 
         // use our bear model to find the bear we want
         Bear.findById(req.params.bear_id, function(err, bear) {
@@ -122,7 +150,7 @@ router.route('/bears/:bear_id')
     })
 
     // delete the bear with this id (accessed at DELETE http://localhost:8080/api/bears/:bear_id)
-    .delete(function(req, res) {
+    .delete(passport.authenticate('jwt', { session: false }),function(req, res) {
         Bear.remove({
             _id: req.params.bear_id
         }, function(err, bear) {
